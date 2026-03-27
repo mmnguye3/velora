@@ -142,7 +142,7 @@ model ConversationLabel {
   labelId        String   @db.ObjectId
   label          Label       @relation(fields: [labelId], references: [id], onDelete: Cascade)
 
-  @@id([conversationId, labelId])
+  @@unique([conversationId, labelId])
 }
 
 model Automation {
