@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --fb-blue: #0081FF;
+  --fb-blue-dark: #0068CC;
+  --messenger-purple: #0099FF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #F0F2F5;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}

@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  facebookPages FacebookPage[]
+  conversations Conversation[]
+  quickReplies QuickReply[]
+  automations  Automation[]
+  labels       Label[]
+  invitations  Invitation[]
+  broadcasts   Broadcast[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           String   @default("agent")
+  avatarUrl      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  conversations  Conversation[] @relation("Assignee")
+  messages      Message[]
+  notes         Note[]
+}
+
+model FacebookPage {
+  id            String   @id @default(cuid())
+  pageId        String
+  pageName      String
+  pageAvatarUrl String?
+  accessToken   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  conversations Conversation[]
+  broadcasts    Broadcast[]
+
+  @@unique([organizationId, pageId])
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  psid          String
+  customerName  String?
+  customerAvatar String?
+  status        String   @default("open")
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  pageId         String
+  facebookPage   FacebookPage @relation(fields: [pageId], references: [id])
+
+  assigneeId     String?
+  assignee       User?    @relation("Assignee", fields: [assigneeId], references: [id])
+
+  messages       Message[]
+  notes          Note[]
+  conversationLabels ConversationLabel[]
+  broadcastRecipients BroadcastRecipient[]
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  direction     String
+  content       String?
+  attachmentUrl String?
+  sentAt        DateTime @default(now())
+  readAt        DateTime?
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId       String?
+  sender         User?    @relation(fields: [senderId], references: [id])
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  content       String
+  createdAt     DateTime @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  authorId       String
+  author         User     @relation(fields: [authorId], references: [id])
+}
+
+model QuickReply {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String?
+  createdAt   DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Label {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  conversations ConversationLabel[]
+}
+
+model ConversationLabel {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  labelId        String
+  label          Label       @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, labelId])
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  name        String
+  triggerType String
+  triggerValue String?
+  replyType   String
+  replyContent String
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  email       String
+  role        String   @default("agent")
+  token       String   @unique
+  expiresAt   DateTime
+  acceptedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, email])
+}
+
+model Broadcast {
+  id          String   @id @default(cuid())
+  name        String
+  content     String
+  status      String   @default("draft")
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  pageId         String
+  facebookPage   FacebookPage @relation(fields: [pageId], references: [id])
+
+  filters        String?
+  totalRecipients Int     @default(0)
+  deliveredCount Int     @default(0)
+  failedCount    Int     @default(0)
+
+  recipients     BroadcastRecipient[]
+}
+
+model BroadcastRecipient {
+  id            String   @id @default(cuid())
+  broadcastId   String
+  broadcast     Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  status        String   @default("pending")
+  error         String?
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([broadcastId, conversationId])
+}
