@@ -8,13 +8,13 @@ datasource db {
 }
 
 model Organization {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   slug        String   @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users        User[]
+  users        User[]       
   facebookPages FacebookPage[]
   conversations Conversation[]
   quickReplies QuickReply[]
@@ -25,7 +25,7 @@ model Organization {
 }
 
 model User {
-  id             String   @id @default(cuid())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   name           String
   email          String   @unique
   password       String
@@ -34,7 +34,7 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   conversations  Conversation[] @relation("Assignee")
@@ -43,7 +43,7 @@ model User {
 }
 
 model FacebookPage {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   pageId        String
   pageName      String
   pageAvatarUrl String?
@@ -51,7 +51,7 @@ model FacebookPage {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   conversations Conversation[]
@@ -61,7 +61,7 @@ model FacebookPage {
 }
 
 model Conversation {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   psid          String
   customerName  String?
   customerAvatar String?
@@ -70,13 +70,13 @@ model Conversation {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
-  pageId         String
+  pageId         String   @db.ObjectId
   facebookPage   FacebookPage @relation(fields: [pageId], references: [id])
 
-  assigneeId     String?
+  assigneeId     String?  @db.ObjectId
   assignee       User?    @relation("Assignee", fields: [assigneeId], references: [id])
 
   messages       Message[]
@@ -86,67 +86,67 @@ model Conversation {
 }
 
 model Message {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   direction     String
   content       String?
   attachmentUrl String?
   sentAt        DateTime @default(now())
   readAt        DateTime?
 
-  conversationId String
+  conversationId String   @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  senderId       String?
+  senderId       String?  @db.ObjectId
   sender         User?    @relation(fields: [senderId], references: [id])
 }
 
 model Note {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   content       String
   createdAt     DateTime @default(now())
 
-  conversationId String
+  conversationId String   @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  authorId       String
+  authorId       String   @db.ObjectId
   author         User     @relation(fields: [authorId], references: [id])
 }
 
 model QuickReply {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   content     String
   category    String?
   createdAt   DateTime @default(now())
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 }
 
 model Label {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   color       String   @default("#6366f1")
   createdAt   DateTime @default(now())
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   conversations ConversationLabel[]
 }
 
 model ConversationLabel {
-  conversationId String
+  conversationId String   @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  labelId        String
+  labelId        String   @db.ObjectId
   label          Label       @relation(fields: [labelId], references: [id], onDelete: Cascade)
 
   @@id([conversationId, labelId])
 }
 
 model Automation {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   triggerType String
   triggerValue String?
@@ -157,12 +157,12 @@ model Automation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 }
 
 model Invitation {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   email       String
   role        String   @default("agent")
   token       String   @unique
@@ -170,14 +170,14 @@ model Invitation {
   acceptedAt DateTime?
   createdAt   DateTime @default(now())
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, email])
 }
 
 model Broadcast {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   content     String
   status      String   @default("draft")
@@ -186,10 +186,10 @@ model Broadcast {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  organizationId String
+  organizationId String   @db.ObjectId
   organization   Organization @relation(fields: [organizationId], references: [id])
 
-  pageId         String
+  pageId         String   @db.ObjectId
   facebookPage   FacebookPage @relation(fields: [pageId], references: [id])
 
   filters        String?
@@ -201,10 +201,10 @@ model Broadcast {
 }
 
 model BroadcastRecipient {
-  id            String   @id @default(cuid())
-  broadcastId   String
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  broadcastId   String   @db.ObjectId
   broadcast     Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
-  conversationId String
+  conversationId String   @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   status        String   @default("pending")
   error         String?
